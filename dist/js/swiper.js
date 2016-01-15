@@ -779,7 +779,10 @@
                 newSlidesGrid = [];
                 for (i = 0; i < s.snapGrid.length; i++) {
                     if (s.snapGrid[i] <= s.virtualSize - s.size) {
-                        newSlidesGrid.push(s.snapGrid[i]);
+                        if(s.params.lockSide)
+                            newSlidesGrid.push(Math.max(s.snapGrid[i], 0));
+                        else
+                            newSlidesGrid.push(s.snapGrid[i]);
                     }
                 }
                 s.snapGrid = newSlidesGrid;
