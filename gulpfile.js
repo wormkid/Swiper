@@ -85,6 +85,20 @@
                 'src/js/wrap-end.js',
                 'src/js/amd.js'
             ],
+            jQueryLiteFiles : [
+                'src/js/wrap-start.js',
+                'src/js/swiper-intro.js',
+                'src/js/core.js',
+                'src/js/emitter.js',
+                'src/js/a11y.js',
+                'src/js/init.js',
+                'src/js/swiper-outro.js',
+                'src/js/swiper-proto.js',
+                'src/js/get-dom-lib.js',
+                'src/js/dom-plugins.js',
+                'src/js/wrap-end.js',
+                'src/js/amd.js'
+            ],
             jQueryUMDFiles : [
                 'src/js/wrap-start-umd.js',
                 'src/js/swiper-intro.js',
@@ -183,6 +197,13 @@
             .pipe(concat(swiper.filename + '.jquery.js'))
             .pipe(header(swiper.banner, { pkg : swiper.pkg, date: swiper.date } ))
             .pipe(gulp.dest(paths.build.scripts));
+        gulp.src(swiper.jQueryLiteFiles)
+            .pipe(tap(function (file, t){
+                addJSIndent (file, t);
+            }))
+            .pipe(concat(swiper.filename + '.jquery.lite.js'))
+            .pipe(header(swiper.banner, { pkg : swiper.pkg, date: swiper.date } ))
+            .pipe(gulp.dest(paths.build.scripts));
         gulp.src(swiper.jQueryUMDFiles)
             .pipe(tap(function (file, t){
                 addJSIndent (file, t);
@@ -248,6 +269,17 @@
             .pipe(header(swiper.banner, { pkg : swiper.pkg, date: swiper.date } ))
             .pipe(rename(function(path) {
                 path.basename = swiper.filename + '.jquery.min';
+            }))
+            .pipe(sourcemaps.write('./maps'))
+            .pipe(gulp.dest(paths.dist.scripts));
+
+        gulp.src([paths.build.scripts + swiper.filename + '.jquery.lite.js'])
+            .pipe(gulp.dest(paths.dist.scripts))
+            .pipe(sourcemaps.init())
+            .pipe(uglify())
+            .pipe(header(swiper.banner, { pkg : swiper.pkg, date: swiper.date } ))
+            .pipe(rename(function(path) {
+                path.basename = swiper.filename + '.jquery.lite.min';
             }))
             .pipe(sourcemaps.write('./maps'))
             .pipe(gulp.dest(paths.dist.scripts));

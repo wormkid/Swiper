@@ -10,7 +10,7 @@
  * 
  * Licensed under MIT
  * 
- * Released on: January 10, 2016
+ * Released on: January 15, 2016
  */
 (function () {
     'use strict';
@@ -26,6 +26,8 @@
             touchEventsTarget: 'container',
             initialSlide: 0,
             speed: 300,
+            nested: false,
+            disableParentSwiper: false,
             // autoplay
             autoplay: false,
             autoplayDisableOnInteraction: true,
@@ -94,6 +96,7 @@
             slidesPerColumnFill: 'column',
             slidesPerGroup: 1,
             centeredSlides: false,
+            lockSide: false,
             slidesOffsetBefore: 0, // in px
             slidesOffsetAfter: 0, // in px
             // Round length
@@ -772,7 +775,7 @@
             }
         
             // Remove last grid elements depending on width
-            if (!s.params.centeredSlides) {
+            if (!s.params.centeredSlides || (s.params.centeredSlides && s.params.lockSide)) {
                 newSlidesGrid = [];
                 for (i = 0; i < s.snapGrid.length; i++) {
                     if (s.snapGrid[i] <= s.virtualSize - s.size) {
@@ -1472,17 +1475,21 @@
             s.swipeDirection = diff > 0 ? 'prev' : 'next';
             currentTranslate = diff + startTranslate;
         
-            var disableParentSwiper = true;
-            if ((diff > 0 && currentTranslate > s.minTranslate())) {
-                disableParentSwiper = false;
-                if (s.params.resistance) currentTranslate = s.minTranslate() - 1 + Math.pow(-s.minTranslate() + startTranslate + diff, s.params.resistanceRatio);
-            }
-            else if (diff < 0 && currentTranslate < s.maxTranslate()) {
-                disableParentSwiper = false;
-                if (s.params.resistance) currentTranslate = s.maxTranslate() + 1 - Math.pow(s.maxTranslate() - startTranslate - diff, s.params.resistanceRatio);
-            }
+            if(!s.params.disableParentSwiper) {
+                var disableParentSwiper = true;
+                if ((diff > 0 && currentTranslate > s.minTranslate())) {
+                    disableParentSwiper = false;
+                    if (s.params.resistance) currentTranslate = s.minTranslate() - 1 + Math.pow(-s.minTranslate() + startTranslate + diff, s.params.resistanceRatio);
+                }
+                else if (diff < 0 && currentTranslate < s.maxTranslate()) {
+                    disableParentSwiper = false;
+                    if (s.params.resistance) currentTranslate = s.maxTranslate() + 1 - Math.pow(s.maxTranslate() - startTranslate - diff, s.params.resistanceRatio);
+                }
         
-            if (disableParentSwiper) {
+                if (disableParentSwiper) {
+                    e.preventedByNestedSwiper = true;
+                }
+            } else {
                 e.preventedByNestedSwiper = true;
             }
         
@@ -1847,6 +1854,7 @@
             }
             s.updateClasses();
             s.onTransitionStart(runCallbacks);
+            if(s.params.lockSide && translate>0) translate = 0; // lock side
         
             if (speed === 0) {
                 s.setWrapperTranslate(translate);
@@ -3056,8 +3064,14 @@
             try {
                 new window.WheelEvent('wheel');
                 s.mousewheel.event = 'wheel';
-            } catch (e) {}
+            } catch (e) {
+                if (window.WheelEvent || (s.container[0] && 'wheel' in s.container[0])) {
+                    s.mousewheel.event = 'wheel';
+                }
+            }
+            if (!s.mousewheel.event && window.WheelEvent) {
         
+            }
             if (!s.mousewheel.event && document.onmousewheel !== undefined) {
                 s.mousewheel.event = 'mousewheel';
             }
@@ -3070,10 +3084,9 @@
             var we = s.mousewheel.event;
             var delta = 0;
             var rtlFactor = s.rtl ? -1 : 1;
-            //Opera & IE
-            if (e.detail) delta = -e.detail;
+        
             //WebKits
-            else if (we === 'mousewheel') {
+            if (we === 'mousewheel') {
                 if (s.params.mousewheelForceToAxis) {
                     if (s.isHorizontal()) {
                         if (Math.abs(e.wheelDeltaX) > Math.abs(e.wheelDeltaY)) delta = e.wheelDeltaX * rtlFactor;
